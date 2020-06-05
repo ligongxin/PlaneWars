@@ -1,7 +1,7 @@
 # 飞机大战
 import pygame
-import os
-from plane import MyPlane,Bullet
+import os,random
+from plane import MyPlane, Bullet,EnemyPlane,BulletSupply,BombSupply,SupperBulletLeft,SupperBulletRight
 
 # 游戏初始化
 pygame.init()
@@ -20,30 +20,54 @@ score = 0
 myFont = pygame.font.SysFont('微软雅黑', 25)
 score_img = myFont.render(str(score), True, (0, 0, 0))
 
+# 我方战机
 myplaneGroup = pygame.sprite.Group()
 myplane = MyPlane()
 myplaneGroup.add(myplane)
 
-bulletGroup=pygame.sprite.Group()
-clock=pygame.time.Clock()
-FPS=30
+# 子弹精灵组
+bulletGroup = pygame.sprite.Group()
 
+# 敌机精灵组
+enemyGroup = pygame.sprite.Group()
+
+#补给精灵组
+supplyGroup=pygame.sprite.Group()
+
+clock = pygame.time.Clock()
+FPS = 60
+
+GUN_BULLET_EVENT=pygame.USEREVENT +1
+pygame.time.set_timer(GUN_BULLET_EVENT,200)
 def main():
+    global score,score_img
     runner = True
     index = 0
-
 
     while runner:
         clock.tick(FPS)
 
-        if index % 20 ==0:
-            for myplane in myplaneGroup:
-                    bullet=Bullet(myplane.rect)
-                    bulletGroup.add(bullet)
+        if index %60 ==0:
+            enemyplane=EnemyPlane(bg_size)
+            enemyGroup.add(enemyplane)
+        if index % 500 ==0:
+            Supply=random.choice([BulletSupply(bg_size),BombSupply(bg_size)])
+            # Supply=BombSupply(bg_size)
+            supplyGroup.add(Supply)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 runner = False
+
+            if event.type == GUN_BULLET_EVENT:
+                for myplane in myplaneGroup:
+                    if myplane.issuppluBullet:
+                        bullet_1=SupperBulletLeft(myplane.rect)
+                        bullet_2= SupperBulletRight(myplane.rect)
+                        bulletGroup.add(bullet_1,bullet_2)
+                    # else:
+                    bullet = Bullet(myplane.rect)
+                    bulletGroup.add(bullet)
 
         mykeyslist = pygame.key.get_pressed()
         if mykeyslist[pygame.K_RIGHT]:
@@ -52,25 +76,63 @@ def main():
                     myplane.rect.left += 5
         elif mykeyslist[pygame.K_LEFT]:
             for myplane in myplaneGroup:
-                if myplane.rect.left > 0 :
+                if myplane.rect.left > 0:
                     myplane.rect.left -= 5
         elif mykeyslist[pygame.K_UP]:
             for myplane in myplaneGroup:
-                if myplane.rect.top > 0 :
+                if myplane.rect.top > 0:
                     myplane.rect.top -= 5
         elif mykeyslist[pygame.K_DOWN]:
             for myplane in myplaneGroup:
-                if myplane.rect.bottom < bg_size[1] :
+                if myplane.rect.bottom < bg_size[1]:
                     myplane.rect.bottom += 5
+        #子弹与敌机碰撞,分数增加
+        for bullet in bulletGroup:
+            for enemyplane in enemyGroup:
+                if pygame.sprite.collide_mask(bullet,enemyplane):
+                    bulletGroup.remove(bullet)
+                    enemyplane.isAlive = False
+                    # if enemyplane.isAlive ==False:
+                    #     print(enemyplane.isAlive)
+                    score +=1
+                    myFont = pygame.font.SysFont('微软雅黑', 25)
+                    score_img = myFont.render(str(score), True, (0, 0, 0))
+
+        #我方战机与敌机碰撞
+        for myplane in myplaneGroup:
+            for enemyplane in enemyGroup:
+                if pygame.sprite.collide_mask(myplane, enemyplane):
+                    enemyplane.isAlive = False
+                    myplane.isAlive =False
+
+        # 我方战机与补给碰撞
+        for myplane in myplaneGroup:
+            for supply in supplyGroup:
+                if isinstance(supply,BulletSupply):
+                    if pygame.sprite.collide_mask(myplane,supply):
+                        supplyGroup.remove(supply)
+                        myplane.issuppluBullet =True
+        if len(myplaneGroup) ==0:
+            runner=False
 
         screen.blit(bg_img, (0, 0))
         screen.blit(score_img, (20, 10))
 
+        index += 1
         myplaneGroup.update(index)
         myplaneGroup.draw(screen)
         bulletGroup.update(index)
         bulletGroup.draw(screen)
+        enemyGroup.update(index)
+        enemyGroup.draw(screen)
+        supplyGroup.update(index)
+        supplyGroup.draw(screen)
+
         pygame.display.update()
-        index += 1
+
+
+
 if __name__ == '__main__':
     main()
+    # res=random.choice(['j','k'])
+    # print(res)
