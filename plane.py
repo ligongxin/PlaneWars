@@ -27,9 +27,12 @@ class MyPlane(pygame.sprite.Sprite):
         self.rect.left = 235
         self.isAlive = True
         self.destroytime = 0
-        self.issuppluBullet = False
+        # self.issupplyBullet = False
+        self.supplyBullettime=0
+        self.supplyBombtime=0
 
     def update(self, *args):
+
         if not self.isAlive:
             if self.destroytime < 12:
                 self.image = self.destroyImages[self.destroytime // 3]
@@ -50,13 +53,21 @@ class Bullet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.top = myplane_rect.top - 10
         self.rect.left = myplane_rect.left + 33
-        self.speed = 3
+        self.speed = 10
 
     def update(self, *args):
         if self.rect.top < 0:
             self.kill()
         else:
             self.rect.top -= self.speed
+
+class Bomb(Bullet):
+    def __init__(self, myplane_rect):
+        super(Bomb, self).__init__(myplane_rect)
+        self.image = pygame.image.load(os.path.join(IMG_PAHT, 'bomb.png')).convert_alpha()
+        # self.rect.top = myplane_rect.top-50
+        # self.rect.left = myplane_rect.left +7
+        # self.speed = 10
 
 class SupperBulletLeft(Bullet):
     def __init__(self, myplane_rect):
@@ -71,7 +82,7 @@ class SupperBulletRight(Bullet):
         super(SupperBulletRight, self).__init__(myplane_rect)
         self.image = pygame.image.load(os.path.join(IMG_PAHT, 'bullet2.png')).convert_alpha()
         self.rect.top = myplane_rect.top
-        self.rect.left = myplane_rect.left + 51
+        self.rect.left = myplane_rect.left + 58
         self.speed = 5
 
 
@@ -85,6 +96,7 @@ class EnemyPlane(pygame.sprite.Sprite):
         self.speed = 2
         self.rect.left = random.randrange(10, bg_size[0] - 10)
         self.height = bg_size[1]
+        self.width=bg_size[0]
         self.isAlive = True
         self.downtime = 0
 
@@ -124,3 +136,35 @@ class BombSupply(BulletSupply):
     def __init__(self, bg_size):
         super(BombSupply, self).__init__(bg_size)
         self.image = pygame.image.load(os.path.join(IMG_PAHT, 'bomb_supply.png')).convert_alpha()
+
+class EnemyMiddle(EnemyPlane):
+    def __init__(self,bg_size):
+        super(EnemyMiddle,self).__init__(bg_size)
+        self.image = pygame.image.load(os.path.join(IMG_PAHT, 'enemy2.png')).convert_alpha()
+        self.downImages = [pygame.image.load(os.path.join(IMG_PAHT, 'enemy2_down{}.png'.format(i))).convert_alpha() for
+                           i in range(1, 5)]
+        self.energy=5
+
+
+    def update(self, *args):
+
+        # if not self.isAlive:
+        if self.energy <=0:
+            if self.downtime < 8:
+                self.image = self.downImages[self.downtime // 2]
+                self.downtime += 1
+            elif self.downtime > 12:
+                self.kill()
+            else:
+                self.downtime += 1
+        if self.rect.top < self.height:
+            self.rect.top += self.speed
+            if self.width//4 <self.rect.left <self.width:
+                self.rect.left -=1
+            elif 0<self.rect.left <=self.width//4:
+                self.rect.left += 1
+        else:
+            self.kill()
+
+
+    

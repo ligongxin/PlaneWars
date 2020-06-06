@@ -1,8 +1,8 @@
 # 飞机大战
 import pygame
-import os,random
+import os,random,time
 from plane import MyPlane, Bullet,EnemyPlane,BulletSupply,BombSupply,SupperBulletLeft,SupperBulletRight
-
+from plane import Bomb,EnemyMiddle
 # 游戏初始化
 pygame.init()
 
@@ -50,6 +50,9 @@ def main():
         if index %60 ==0:
             enemyplane=EnemyPlane(bg_size)
             enemyGroup.add(enemyplane)
+        if index %120 ==0:
+            enemyplane = EnemyMiddle(bg_size)
+            enemyGroup.add(enemyplane)
         if index % 500 ==0:
             Supply=random.choice([BulletSupply(bg_size),BombSupply(bg_size)])
             # Supply=BombSupply(bg_size)
@@ -61,10 +64,14 @@ def main():
 
             if event.type == GUN_BULLET_EVENT:
                 for myplane in myplaneGroup:
-                    if myplane.issuppluBullet:
+
+                    if time.time() -myplane.supplyBullettime<10:
                         bullet_1=SupperBulletLeft(myplane.rect)
                         bullet_2= SupperBulletRight(myplane.rect)
                         bulletGroup.add(bullet_1,bullet_2)
+                    if time.time() -myplane.supplyBombtime<10:
+                        bomb=Bomb(myplane.rect)
+                        bulletGroup.add(bomb)
                     # else:
                     bullet = Bullet(myplane.rect)
                     bulletGroup.add(bullet)
@@ -89,14 +96,20 @@ def main():
         #子弹与敌机碰撞,分数增加
         for bullet in bulletGroup:
             for enemyplane in enemyGroup:
-                if pygame.sprite.collide_mask(bullet,enemyplane):
-                    bulletGroup.remove(bullet)
-                    enemyplane.isAlive = False
+                if type(enemyplane)==EnemyPlane:
+                    if pygame.sprite.collide_mask(bullet,enemyplane):
+                        bulletGroup.remove(bullet)
+                        enemyplane.isAlive = False
                     # if enemyplane.isAlive ==False:
                     #     print(enemyplane.isAlive)
-                    score +=1
-                    myFont = pygame.font.SysFont('微软雅黑', 25)
-                    score_img = myFont.render(str(score), True, (0, 0, 0))
+                        score +=1
+                        myFont = pygame.font.SysFont('微软雅黑', 25)
+                        score_img = myFont.render(str(score), True, (0, 0, 0))
+                elif type(enemyplane)==EnemyMiddle:
+                    if pygame.sprite.collide_mask(bullet, enemyplane):
+                        bulletGroup.remove(bullet)
+                        enemyplane.energy -=1
+
 
         #我方战机与敌机碰撞
         for myplane in myplaneGroup:
@@ -108,10 +121,17 @@ def main():
         # 我方战机与补给碰撞
         for myplane in myplaneGroup:
             for supply in supplyGroup:
-                if isinstance(supply,BulletSupply):
+                # if isinstance(supply,BulletSupply):
+                if type(supply) ==BulletSupply:
                     if pygame.sprite.collide_mask(myplane,supply):
                         supplyGroup.remove(supply)
-                        myplane.issuppluBullet =True
+                        # myplane.issupplyBullet =True
+                        myplane.supplyBullettime=time.time()
+                else:
+                    if pygame.sprite.collide_mask(myplane, supply):
+                        supplyGroup.remove(supply)
+                        # myplane.supplyBombtime = time.time()
+
         if len(myplaneGroup) ==0:
             runner=False
 
