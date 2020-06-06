@@ -5,7 +5,7 @@
 # IDE      :PyCharm
 
 import pygame, os
-import random
+import random, time
 
 IMG_PAHT = os.path.join(os.path.dirname(__file__), 'images')
 
@@ -27,9 +27,9 @@ class MyPlane(pygame.sprite.Sprite):
         self.rect.left = 235
         self.isAlive = True
         self.destroytime = 0
-        # self.issupplyBullet = False
-        self.supplyBullettime=0
-        self.supplyBombtime=0
+        self.supplyBullettime = 0
+        self.invincible = False
+        self.createtime = time.time()
 
     def update(self, *args):
 
@@ -61,13 +61,16 @@ class Bullet(pygame.sprite.Sprite):
         else:
             self.rect.top -= self.speed
 
-class Bomb(Bullet):
-    def __init__(self, myplane_rect):
-        super(Bomb, self).__init__(myplane_rect)
+
+class Bomb():
+    def __init__(self, ):
+        # super(Bomb, self).__init__()
         self.image = pygame.image.load(os.path.join(IMG_PAHT, 'bomb.png')).convert_alpha()
-        # self.rect.top = myplane_rect.top-50
-        # self.rect.left = myplane_rect.left +7
+        self.rect = self.image.get_rect()
+        self.rect.top = 630
+        self.rect.left = 10
         # self.speed = 10
+
 
 class SupperBulletLeft(Bullet):
     def __init__(self, myplane_rect):
@@ -75,7 +78,8 @@ class SupperBulletLeft(Bullet):
         self.image = pygame.image.load(os.path.join(IMG_PAHT, 'bullet2.png')).convert_alpha()
         self.rect.top = myplane_rect.top
         self.rect.left = myplane_rect.left + 11
-        self.speed = 5
+        self.speed = 10
+
 
 class SupperBulletRight(Bullet):
     def __init__(self, myplane_rect):
@@ -83,7 +87,7 @@ class SupperBulletRight(Bullet):
         self.image = pygame.image.load(os.path.join(IMG_PAHT, 'bullet2.png')).convert_alpha()
         self.rect.top = myplane_rect.top
         self.rect.left = myplane_rect.left + 58
-        self.speed = 5
+        self.speed = 10
 
 
 class EnemyPlane(pygame.sprite.Sprite):
@@ -96,23 +100,25 @@ class EnemyPlane(pygame.sprite.Sprite):
         self.speed = 2
         self.rect.left = random.randrange(10, bg_size[0] - 10)
         self.height = bg_size[1]
-        self.width=bg_size[0]
+        self.width = bg_size[0]
         self.isAlive = True
         self.downtime = 0
+        self.energy = 1
 
     def update(self, *args):
-        if not self.isAlive:
+        # if not self.isAlive:
+        if self.energy <= 0:
             if self.downtime < 8:
                 self.image = self.downImages[self.downtime // 2]
                 self.downtime += 1
-            elif self.downtime > 12:
+            elif self.downtime > 9:
                 self.kill()
             else:
                 self.downtime += 1
         if self.rect.top < self.height:
             self.rect.top += self.speed
         else:
-            self.kill()
+            self.rect.top = 0
 
 
 # 补给
@@ -137,19 +143,19 @@ class BombSupply(BulletSupply):
         super(BombSupply, self).__init__(bg_size)
         self.image = pygame.image.load(os.path.join(IMG_PAHT, 'bomb_supply.png')).convert_alpha()
 
+
 class EnemyMiddle(EnemyPlane):
-    def __init__(self,bg_size):
-        super(EnemyMiddle,self).__init__(bg_size)
+    def __init__(self, bg_size):
+        super(EnemyMiddle, self).__init__(bg_size)
         self.image = pygame.image.load(os.path.join(IMG_PAHT, 'enemy2.png')).convert_alpha()
         self.downImages = [pygame.image.load(os.path.join(IMG_PAHT, 'enemy2_down{}.png'.format(i))).convert_alpha() for
                            i in range(1, 5)]
-        self.energy=5
-
+        self.energy = 5
 
     def update(self, *args):
 
         # if not self.isAlive:
-        if self.energy <=0:
+        if self.energy <= 0:
             if self.downtime < 8:
                 self.image = self.downImages[self.downtime // 2]
                 self.downtime += 1
@@ -159,12 +165,50 @@ class EnemyMiddle(EnemyPlane):
                 self.downtime += 1
         if self.rect.top < self.height:
             self.rect.top += self.speed
-            if self.width//4 <self.rect.left <self.width:
-                self.rect.left -=1
-            elif 0<self.rect.left <=self.width//4:
+            if self.width // 4 < self.rect.left < self.width:
+                self.rect.left -= 1
+            elif 0 < self.rect.left <= self.width // 4:
                 self.rect.left += 1
+            else:
+                self.rect.top = 0
+
+
+class BigEnemy(EnemyPlane):
+    def __init__(self, bg_size):
+        super(BigEnemy, self).__init__(bg_size)
+        self.image = pygame.image.load(os.path.join(IMG_PAHT, 'enemy3_hit.png')).convert_alpha()
+        self.images = [pygame.image.load(os.path.join(IMG_PAHT, 'enemy3_n{}.png'.format(i))).convert_alpha() for i in
+                       range(1, 3)]
+        self.downImages = [pygame.image.load(os.path.join(IMG_PAHT, 'enemy3_down{}.png'.format(i))).convert_alpha() for
+                           i in range(1, 7)]
+
+        self.energy = 32
+        self.rect.left = random.randrange(bg_size[0] - 100)
+
+    def update(self, *args):
+        # if not self.isAlive:
+        if self.energy <= 0:
+            self.energy = 0
+            if self.downtime < 12:
+                self.image = self.downImages[self.downtime // 2]
+                self.downtime += 1
+            elif self.downtime > 14:
+                self.kill()
+            else:
+                self.downtime += 1
+        if self.rect.top < self.height:
+            self.rect.top += self.speed
+            if self.energy > 0:
+                self.image = self.images[args[0] % len(self.images)]
+                # if self.width//4 <self.rect.left <self.width:
+                #     self.rect.left -=1
+                # elif 0<self.rect.left <=self.width//4:
+                #     self.rect.left += 1
         else:
-            self.kill()
+            self.rect.top = 0
+        self.health_bar(args[1], args[2])
+        self.health_bar(args[1], args[3], width=self.energy * 5)
 
-
-    
+    # 敌机生命条
+    def health_bar(self, screen, color, width=160):
+        pygame.draw.rect(screen, color, [self.rect.left, self.rect.top - 5, width, 2], 0)
