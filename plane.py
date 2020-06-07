@@ -118,8 +118,11 @@ class EnemyPlane(pygame.sprite.Sprite):
         if self.rect.top < self.height:
             self.rect.top += self.speed
         else:
-            self.rect.top = 0
+            self.rect.bottom = 0
 
+    # 敌机生命条
+    def health_bar(self, screen, color, width=160):
+        pygame.draw.rect(screen, color, [self.rect.left, self.rect.top - 5, width, 2], 0)
 
 # 补给
 class BulletSupply(pygame.sprite.Sprite):
@@ -151,11 +154,13 @@ class EnemyMiddle(EnemyPlane):
         self.downImages = [pygame.image.load(os.path.join(IMG_PAHT, 'enemy2_down{}.png'.format(i))).convert_alpha() for
                            i in range(1, 5)]
         self.energy = 5
+        self.speed =2
 
     def update(self, *args):
 
         # if not self.isAlive:
         if self.energy <= 0:
+            self.energy = 0
             if self.downtime < 8:
                 self.image = self.downImages[self.downtime // 2]
                 self.downtime += 1
@@ -170,7 +175,10 @@ class EnemyMiddle(EnemyPlane):
             elif 0 < self.rect.left <= self.width // 4:
                 self.rect.left += 1
             else:
-                self.rect.top = 0
+                self.rect.bottom = 0
+            self.health_bar(args[1], args[2],width=70)
+            self.health_bar(args[1], args[3], width=self.energy * 14)
+
 
 
 class BigEnemy(EnemyPlane):
@@ -184,6 +192,7 @@ class BigEnemy(EnemyPlane):
 
         self.energy = 32
         self.rect.left = random.randrange(bg_size[0] - 100)
+        self.speed =1
 
     def update(self, *args):
         # if not self.isAlive:
@@ -205,7 +214,7 @@ class BigEnemy(EnemyPlane):
                 # elif 0<self.rect.left <=self.width//4:
                 #     self.rect.left += 1
         else:
-            self.rect.top = 0
+            self.rect.bottom = 0
         self.health_bar(args[1], args[2])
         self.health_bar(args[1], args[3], width=self.energy * 5)
 
