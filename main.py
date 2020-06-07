@@ -396,9 +396,9 @@ def main():
 
             myFont = pygame.font.SysFont('STKaiti', 40)
             bast_score_img = myFont.render('  Bast:  {}'.format(bast_score), True, WRITE)
-            score_font = pygame.font.SysFont('楷体', 60)
+            score_font = pygame.font.SysFont('arial', 60)
             your_score_img = score_font.render('Your   Score', True, WRITE)
-            score_font = pygame.font.SysFont('楷体', 80)
+            score_font = pygame.font.SysFont('arial', 80)
             score_show = score_font.render(str(score), True, WRITE)
             screen.blit(bast_score_img, (20, 10))
             screen.blit(your_score_img, (130, 240))
