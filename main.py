@@ -104,7 +104,7 @@ def main():
     # 敌机生成速度
     sm_em = 120
     mi_em = 900
-    bi_em = 200
+    bi_em = 2000
     # 补给生成速度
     sup_speed = 900
     # 子弹速度
